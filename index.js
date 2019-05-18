@@ -2,8 +2,51 @@ const BASE_URL = 'https://jsonplaceholder.typicode.com';
 
 let usersDivEl;
 let postsDivEl;
+let albumsDivEl;
 let loadButtonEl;
 let commentsDivEl;
+let postsButtonEl;
+let albumsButtonEl;
+
+function createAlbumsList(albums) {
+    const ulEl = document.createElement('ul');
+
+    for (let i = 0; i < albums.length; i++) {
+        const album = albums[i];
+        const strongEl = document.createElement('strong');
+        strongEl.textContent = album.title;
+
+        const buttonEl = document.createElement('button');
+        buttonEl.appendChild(strongEl);
+
+        const pEl = document.createElement('p');
+        pEl.appendChild(strongEl);
+
+        const liEl = document.createElement('li');
+        liEl.appendChild(pEl);
+        ulEl.appendChild(liEl);
+    }
+    return ulEl;
+}
+
+function onAlbumsReceived() {
+    const text = this.responseText;
+    const albums = JSON.parse(text);
+    const divEl = document.getElementById('albums-content');
+    while (divEl.firstChild) {
+        divEl.removeChild(divEl.firstChild);
+    }
+    divEl.appendChild(createAlbumsList(albums));
+}
+
+function onLoadAlbums() {
+    const el = this;
+    const userId = el.getAttribute('data-user-id');
+    const xhr = new XMLHttpRequest();
+    xhr.addEventListener('load', onAlbumsReceived);
+    xhr.open('GET', BASE_URL + '/albums?userId=' + userId);
+    xhr.send();
+}
 
 function createCommentsList(comments) {
     const ulEl = document.createElement('ul');
@@ -22,22 +65,17 @@ function createCommentsList(comments) {
 
         const liEl = document.createElement('li');
         liEl.appendChild(pEl);
-        
+
         ulEl.appendChild(liEl);
     }
     return ulEl;
 }
 
 function onCommentsReceived() {
-
-
     commentsDivEl.style.display = 'inline-block';
-
     const text = this.responseText;
     const comments = JSON.parse(text);
-
     const divEl = document.getElementById('comments');
-    
     divEl.appendChild(createCommentsList(comments));
 }
 
@@ -58,7 +96,7 @@ function onLoadComments() {
 }
 
 function createPostsList(posts) {
-    
+
     const ulEl = document.createElement('ul');
 
     for (let i = 0; i < posts.length; i++) {
@@ -66,35 +104,30 @@ function createPostsList(posts) {
         // creating paragraph
         const strongEl = document.createElement('strong');
         strongEl.textContent = post.title;
-
         const postIdAttr = document.createAttribute('post-id');
         postIdAttr.value = post.id;
-
         const buttonEl = document.createElement('button');
         buttonEl.appendChild(strongEl);
         buttonEl.setAttributeNode(postIdAttr);
         buttonEl.addEventListener('click', onLoadComments);
-
         const pEl = document.createElement('p');
         pEl.appendChild(buttonEl);
         pEl.appendChild(document.createTextNode(`: ${post.body}`));
-
         // creating list item
         const liEl = document.createElement('li');
         liEl.appendChild(pEl);
-
         ulEl.appendChild(liEl);
     }
     return ulEl;
 }
 
 function onPostsReceived() {
-    postsDivEl.style.display = 'block';
 
     const text = this.responseText;
     const posts = JSON.parse(text);
 
     const divEl = document.getElementById('posts-content');
+    
     while (divEl.firstChild) {
         divEl.removeChild(divEl.firstChild);
     }
@@ -112,6 +145,7 @@ function onLoadPosts() {
 }
 
 function createUsersTableHeader() {
+
     const idTdEl = document.createElement('td');
     idTdEl.textContent = 'Id';
 
@@ -129,7 +163,6 @@ function createUsersTableHeader() {
 
 function createUsersTableBody(users) {
     const tbodyEl = document.createElement('tbody');
-
     for (let i = 0; i < users.length; i++) {
         const user = users[i];
 
@@ -144,7 +177,9 @@ function createUsersTableBody(users) {
         const buttonEl = document.createElement('button');
         buttonEl.textContent = user.name;
         buttonEl.setAttributeNode(dataUserIdAttr);
+        buttonEl.addEventListener('click', onLoadAlbums);
         buttonEl.addEventListener('click', onLoadPosts);
+
 
         const nameTdEl = document.createElement('td');
         nameTdEl.appendChild(buttonEl);
@@ -164,6 +199,19 @@ function createUsersTable(users) {
     const tableEl = document.createElement('table');
     tableEl.appendChild(createUsersTableHeader());
     tableEl.appendChild(createUsersTableBody(users));
+
+    postsButtonEl.style.display = 'initial';
+    postsButtonEl.addEventListener('click', () => {
+        postsDivEl.style.display = 'block';
+        albumsDivEl.style.display = 'none';
+    });
+
+    albumsButtonEl.style.display = 'initial';
+    albumsButtonEl.addEventListener('click', () => {
+        postsDivEl.style.display = 'none';
+        albumsDivEl.style.display = 'block';
+    });
+
     return tableEl;
 }
 
@@ -175,6 +223,7 @@ function onUsersReceived() {
 
     const divEl = document.getElementById('users-content');
     divEl.appendChild(createUsersTable(users));
+
 }
 
 function onLoadUsers() {
@@ -187,6 +236,10 @@ function onLoadUsers() {
 document.addEventListener('DOMContentLoaded', (event) => {
     usersDivEl = document.getElementById('users');
     postsDivEl = document.getElementById('posts');
+    postsDivEl.style.display = 'initial';
+    albumsDivEl = document.getElementById('albums');
     loadButtonEl = document.getElementById('load-users');
     loadButtonEl.addEventListener('click', onLoadUsers);
+    postsButtonEl = document.getElementById('posts-button');
+    albumsButtonEl = document.getElementById('albums-button');
 });
