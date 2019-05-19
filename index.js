@@ -3,10 +3,49 @@ const BASE_URL = 'https://jsonplaceholder.typicode.com';
 let usersDivEl;
 let postsDivEl;
 let albumsDivEl;
-let loadButtonEl;
 let commentsDivEl;
+let photosDivEl;
+let loadButtonEl;
 let postsButtonEl;
 let albumsButtonEl;
+
+function createPhotosList(photos) {
+    const divEl = document.createElement('div');
+    for (let i = 0; i < photos.length; i++) {
+        const photo = photos[i];
+        const aEl = document.createElement('a');
+        aEl.setAttribute('href', photo.url);
+        const imgEl = document.createElement('img');
+        imgEl.setAttribute('src', photo.thumbnailUrl);
+        aEl.appendChild(imgEl);
+        divEl.appendChild(aEl);
+  }
+    return divEl;
+}
+
+function onPhotosReceived() {
+    const text = this.responseText;
+    const photos = JSON.parse(text);
+    const divEl = document.getElementById('photos');
+    divEl.style.display = 'block';
+    divEl.appendChild(createPhotosList(photos));
+}
+
+function onLoadPhotos() {
+    const tempEl = document.getElementById('photos');
+    if (tempEl !== null) {
+        tempEl.parentNode.removeChild(tempEl);
+    }
+    photosDivEl = document.createElement('div');
+    photosDivEl.id = 'photos';
+    el = this;
+    el.parentNode.appendChild(photosDivEl);
+    const albumId = el.getAttribute('album-id');
+    const xhr = new XMLHttpRequest();
+    xhr.addEventListener('load', onPhotosReceived);
+    xhr.open('GET', BASE_URL + '/photos?albumId=' + albumId);
+    xhr.send();
+}
 
 function createAlbumsList(albums) {
     const ulEl = document.createElement('ul');
@@ -15,13 +54,14 @@ function createAlbumsList(albums) {
         const album = albums[i];
         const strongEl = document.createElement('strong');
         strongEl.textContent = album.title;
-
+        const dataAlbumIdAttr = document.createAttribute('album-id');
+        dataAlbumIdAttr.value = album.id;
         const buttonEl = document.createElement('button');
+        buttonEl.setAttributeNode(dataAlbumIdAttr);
         buttonEl.appendChild(strongEl);
-
+        buttonEl.addEventListener('click', onLoadPhotos);
         const pEl = document.createElement('p');
-        pEl.appendChild(strongEl);
-
+        pEl.appendChild(buttonEl);
         const liEl = document.createElement('li');
         liEl.appendChild(pEl);
         ulEl.appendChild(liEl);
